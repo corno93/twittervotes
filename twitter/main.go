@@ -2,6 +2,9 @@ package main
 
 import (
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/corno93/twittervotes/mongo"
 
@@ -39,12 +42,35 @@ type PollData struct {
 
 func main() {
 
+	// create channels
+	votes := make(chan string) // chan for votes
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+
 	// start mongo and read users options
 	mongo.Dialdb()
 	options := mongo.UsersOptions("polls")
 	log.Println(options)
 
 	// read from twitter
-	ReadTwitter(options)
+	go ReadTwitter(votes, options)
+
+	// send on NSQ
+	//	go nsq.PublishVotes(votes)
+
+	for {
+		select {
+		case vote := <-votes:
+			log.Println("received ", vote)
+		case shutdown := <-signalChan:
+			log.Println("System Shutdown", shutdown)
+			//	CloseTwitterConn()
+			ShutDownTwitter()
+			break
+			//	nsq.ShutDownNSQ()
+		}
+	}
+
+	log.Println("Dead")
 
 }
