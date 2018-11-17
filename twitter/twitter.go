@@ -1,53 +1,37 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/joeshaw/envdecode"
+	"github.com/matryer/go-oauth/oauth"
 )
-
-func twitter() {
-	fmt.Println("hey")
-}
-
-// Read authorisation fields from environment variables
-type authClient struct {
-	ConsumerKey    string
-	ConsumerSecret string
-	AccessToken    string
-	AccessSecret   string
-}
 
 var (
 	authSetupOnce sync.Once
 	httpClient    *http.Client
-	auth          authClient // authorisation fields
+	authClient    *oauth.Client
+	creds         *oauth.Credentials
+	client        *http.Client
+	conn          net.Conn
 )
 
-// read authorisation keys and secrets from env variables
-func readAuth() error {
-
-	auth = authClient{ConsumerKey: os.Getenv("SP_TWITTER_KEY"),
-		ConsumerSecret: os.Getenv("SP_TWITTER_SECRET"),
-		AccessToken:    os.Getenv("SP_TWITTER_ACCESSTOKEN"),
-		AccessSecret:   os.Getenv("SP_TWITTER_ACCESSSECRET")}
-
-	if auth.AccessSecret == "" || auth.ConsumerSecret == "" || auth.AccessToken == "" ||
-		auth.AccessSecret == "" {
-		return errFailedAuth
-	}
-
-	return nil
-}
-
-var conn net.Conn
-
+// Method closes and opens new connections (to the address on the named network - twitter) continuosuly so if a connection dies
+// we can re-dial without worrying about zombie connections.
 func dial(netw, addr string) (net.Conn, error) {
+
+	fmt.Println(netw, addr)
+
 	if conn != nil {
 		conn.Close()
 		conn = nil
@@ -60,21 +44,118 @@ func dial(netw, addr string) (net.Conn, error) {
 	return netc, nil
 }
 
+// read environment variables
+func SetupTwitterAuth() {
+	var ts struct {
+		ConsumerKey    string `env:"SP_TWITTER_KEY,required"`
+		ConsumerSecret string `env:"SP_TWITTER_SECRET,required"`
+		AccessToken    string `env:"SP_TWITTER_ACCESSTOKEN,required"`
+		AccessSecret   string `env:"SP_TWITTER_ACCESSSECRET,required"`
+	}
+	if err := envdecode.Decode(&ts); err != nil {
+		log.Fatalln(err)
+	}
+	creds = &oauth.Credentials{
+		Token:  ts.AccessToken,
+		Secret: ts.AccessSecret,
+	}
+	authClient = &oauth.Client{
+		Credentials: oauth.Credentials{
+			Token:  ts.ConsumerKey,
+			Secret: ts.ConsumerSecret,
+		}}
+
+}
+
 // Build the authorized request and return the response
-func makeRequest(req *http.Request, params url.Values) (*http.Response,
+func makeRequest(url string, params url.Values) (*http.Response,
 	error) {
-	//use sync.Once to ensure our initialization code gets run only once despite the number of times we call makeRequest
-	authSetupOnce.Do(func() {
-		readAuth()
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				Dial: dial,
-			}}
-	})
+
+	// //use sync.Once to ensure our initialization code gets run only once despite the number of times we call makeRequest
+	// authSetupOnce.Do(func() {
+	// 	setupTwitterAuth()
+	// 	httpClient = &http.Client{
+	// 		Transport: &http.Transport{
+	// 			Dial: dial,
+	// 		}}
+	// })
 
 	formEnc := params.Encode()
-	req.Header.Set("Content-Type", "application/x-www-form- urlencoded")
-	req.Header.Set("Content-Length", strconv.Itoa(len(formEnc)))
+	req, err := http.NewRequest("POST", url, strings.NewReader(formEnc))
+
+	if err != nil {
+		log.Println("creating filter request failed:", err)
+		return nil, err
+	}
+
 	req.Header.Set("Authorization", authClient.AuthorizationHeader(creds, "POST", req.URL, params))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(formEnc)))
+
 	return httpClient.Do(req)
+
+}
+
+type tweet struct {
+	Text string
+}
+
+// read from twitter
+func ReadTwitter(options []string) {
+
+	SetupTwitterAuth()
+
+	// Talk to services over http. include transport struct that used by clients to manage
+	// the underlying TCP connection and it’s Dialer is a struct that manages the
+	// establishment of the connection.
+	httpClient = &http.Client{
+		Transport: &http.Transport{
+			Dial: dial,
+		}}
+
+	// continuosly loop forever
+	for {
+
+		// make the url
+		u, _ := url.Parse("https://stream.twitter.com/1.1/statuses/filter.json")
+
+		hashtags := make([]string, len(options))
+		for i := range options {
+			hashtags[i] = "#" + strings.ToLower(options[i])
+		}
+		form := url.Values{"track": {strings.Join(hashtags, ",")}}
+
+		resp, err := makeRequest(u.String(), form)
+		if err != nil {
+			log.Println("making request failed:", err)
+		}
+
+		// this is a nice way to see what the error actually is:
+		if resp.StatusCode != http.StatusOK {
+			s := bufio.NewScanner(resp.Body)
+			s.Scan()
+			log.Println(s.Text())
+			log.Println(hashtags)
+			log.Println("StatusCode =", resp.StatusCode)
+			continue
+		}
+		reader := resp.Body
+		decoder := json.NewDecoder(reader)
+
+		for {
+			var t tweet
+			if err := decoder.Decode(&t); err == nil {
+				for _, option := range options {
+					if strings.Contains(
+						strings.ToLower(t.Text),
+						strings.ToLower(option),
+					) {
+						log.Println("vote:", option)
+					}
+				}
+			} else {
+				break
+			}
+		}
+	}
 }
