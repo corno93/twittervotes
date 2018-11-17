@@ -1,4 +1,4 @@
-package main
+package mongo
 
 import (
 	"log"
@@ -15,13 +15,14 @@ type PollData struct {
 	ApiKey  string         `bson:"apikey"`
 }
 
-func main() {
-
-}
+// global variables
+var (
+	db *mgo.Session // mongo client
+)
 
 func runMongo() {
 	// read from mongo
-	err := dialdb()
+	err := Dialdb()
 	// test print something
 	c := db.DB("ballots").C("polls")
 	var pollData []PollData
@@ -36,8 +37,28 @@ func runMongo() {
 
 }
 
+// function returns the options in one users collection
+func UsersOptions(collection string) []string {
+
+	c := db.DB("ballots").C(collection)
+	var pollData []PollData
+	err := c.Find(nil).All(&pollData)
+
+	if err != nil {
+		//log.Printf("RunQuery : ERROR : %s\n", err)
+		log.Fatalln("RunQuery : ERROR : \n", err)
+	}
+
+	// collect options in users collection
+	var options []string
+	for _, poll := range pollData {
+		options = append(options, poll.Options...)
+	}
+	return options
+}
+
 // function opens the monogodb connection
-func dialdb() error {
+func Dialdb() error {
 	var err error
 	log.Println("dialing mongodb: localhost")
 	db, err = mgo.Dial("localhost")
