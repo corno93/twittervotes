@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -24,6 +25,8 @@ var (
 	creds         *oauth.Credentials
 	client        *http.Client
 	conn          net.Conn
+	reader        io.ReadCloser
+	shutdown      bool
 )
 
 // Method closes and opens new connections (to the address on the named network - twitter) continuosuly so if a connection dies
@@ -101,7 +104,7 @@ type tweet struct {
 }
 
 // read from twitter
-func ReadTwitter(options []string) {
+func ReadTwitter(votes chan string, options []string) {
 
 	SetupTwitterAuth()
 
@@ -112,6 +115,8 @@ func ReadTwitter(options []string) {
 		Transport: &http.Transport{
 			Dial: dial,
 		}}
+
+	shutdown = false
 
 	// continuosly loop forever
 	for {
@@ -139,10 +144,15 @@ func ReadTwitter(options []string) {
 			log.Println("StatusCode =", resp.StatusCode)
 			continue
 		}
-		reader := resp.Body
+		reader = resp.Body
 		decoder := json.NewDecoder(reader)
 
 		for {
+			if shutdown {
+				log.Println("Twitter shutdown")
+				return
+			}
+			fmt.Println("SHTDOWN: ", shutdown)
 			var t tweet
 			if err := decoder.Decode(&t); err == nil {
 				for _, option := range options {
@@ -150,7 +160,7 @@ func ReadTwitter(options []string) {
 						strings.ToLower(t.Text),
 						strings.ToLower(option),
 					) {
-						log.Println("vote:", option)
+						votes <- option
 					}
 				}
 			} else {
@@ -158,4 +168,17 @@ func ReadTwitter(options []string) {
 			}
 		}
 	}
+}
+
+func closeConn() {
+	if conn != nil {
+		conn.Close()
+	}
+	if reader != nil {
+		reader.Close()
+	}
+}
+
+func ShutDownTwitter() {
+	shutdown = true
 }
