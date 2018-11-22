@@ -17,14 +17,14 @@ type PollData struct {
 
 // global variables
 var (
-	db *mgo.Session // mongo client
+	Db *mgo.Session // mongo client
 )
 
-func runMongo() {
+func RunMongo() {
 	// read from mongo
 	err := Dialdb()
 	// test print something
-	c := db.DB("ballots").C("polls")
+	c := Db.DB("ballots").C("polls")
 	var pollData []PollData
 	err = c.Find(nil).All(&pollData)
 	if err != nil {
@@ -40,7 +40,7 @@ func runMongo() {
 // function returns the options in one users collection
 func UsersOptions(collection string) []string {
 
-	c := db.DB("ballots").C(collection)
+	c := Db.DB("ballots").C(collection)
 	var pollData []PollData
 	err := c.Find(nil).All(&pollData)
 
@@ -61,14 +61,14 @@ func UsersOptions(collection string) []string {
 func Dialdb() error {
 	var err error
 	log.Println("dialing mongodb: localhost")
-	db, err = mgo.Dial("localhost")
-	db.SetMode(mgo.Monotonic, true) //In the Monotonic consistency mode reads may not be entirely up-to-date, but they will always see the history of changes moving forward, the data read will be consistent across sequential queries in the same session, and modifications made within the session will be observed in following queries (read-your-writes).
+	Db, err = mgo.Dial("localhost")
+	Db.SetMode(mgo.Monotonic, true) //In the Monotonic consistency mode reads may not be entirely up-to-date, but they will always see the history of changes moving forward, the data read will be consistent across sequential queries in the same session, and modifications made within the session will be observed in following queries (read-your-writes).
 
 	return err
 }
 
 // function closes mongodb
-func closedb() {
-	db.Close()
+func Closedb() {
+	Db.Close()
 	log.Println("closed database connection")
 }
