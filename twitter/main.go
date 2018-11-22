@@ -7,10 +7,9 @@ import (
 	"syscall"
 
 	"github.com/corno93/twittervotes/mongo"
+	"github.com/corno93/twittervotes/nsq"
 
 	"log"
-
-	"gopkg.in/mgo.v2/bson"
 )
 
 /*
@@ -32,45 +31,38 @@ var (
 	errFailedAuth = errors.New("Could not read all authorisation environment variables")
 )
 
-type PollData struct {
-	ID      bson.ObjectId  `bson:"_id"`
-	Title   string         `bson:"title"`
-	Options []string       `bson:"options"`
-	Results map[string]int `bson:"results"`
-	ApiKey  string         `bson:"apikey"`
-}
-
 func main() {
 
 	// create channels
-	votes := make(chan string) // chan for votes
-	signalChan := make(chan os.Signal, 1)
+	votes := make(chan string)            // chan for votes
+	signalChan := make(chan os.Signal, 1) // gracefully shutdown when cntl-c is hit
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	// start mongo and read users options
 	mongo.Dialdb()
 	options := mongo.UsersOptions("polls")
-	log.Println(options)
 
 	// read from twitter
 	go ReadTwitter(votes, options)
 
 	// send on NSQ
-	//	go nsq.PublishVotes(votes)
+	go nsq.PublishVotes(votes)
 
+readChannels:
 	for {
 		select {
 		case vote := <-votes:
 			log.Println("received ", vote)
 		case shutdown := <-signalChan:
 			log.Println("System Shutdown", shutdown)
-			//	CloseTwitterConn()
 			ShutDownTwitter()
-			break
-			//	nsq.ShutDownNSQ()
+			mongo.Closedb()
+			close(votes)
+			nsq.ShutDownNSQ()
+			break readChannels
+
 		}
 	}
-
-	log.Println("Dead")
+	log.Println("System dead")
 
 }

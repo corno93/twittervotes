@@ -27,6 +27,7 @@ var (
 	conn          net.Conn
 	reader        io.ReadCloser
 	shutdown      bool
+	stoplock      sync.Mutex
 )
 
 // Method closes and opens new connections (to the address on the named network - twitter) continuosuly so if a connection dies
@@ -106,6 +107,10 @@ type tweet struct {
 // read from twitter
 func ReadTwitter(votes chan string, options []string) {
 
+	defer func() {
+		log.Println("Twitter defer hit")
+	}()
+
 	SetupTwitterAuth()
 
 	// Talk to services over http. include transport struct that used by clients to manage
@@ -116,10 +121,21 @@ func ReadTwitter(votes chan string, options []string) {
 			Dial: dial,
 		}}
 
+	stoplock.Lock()
 	shutdown = false
+	stoplock.Unlock()
 
 	// continuosly loop forever
 	for {
+
+		fmt.Println("STOP: ", shutdown)
+
+		// stoplock.Lock()
+		// if shutdown {
+		// 	stoplock.Unlock()
+		// 	log.Println("Twitter shutdown")
+		// 	return
+		// }
 
 		// make the url
 		u, _ := url.Parse("https://stream.twitter.com/1.1/statuses/filter.json")
@@ -148,10 +164,13 @@ func ReadTwitter(votes chan string, options []string) {
 		decoder := json.NewDecoder(reader)
 
 		for {
+			stoplock.Lock()
 			if shutdown {
+				stoplock.Unlock()
 				log.Println("Twitter shutdown")
 				return
 			}
+			stoplock.Unlock()
 			fmt.Println("SHTDOWN: ", shutdown)
 			var t tweet
 			if err := decoder.Decode(&t); err == nil {
@@ -180,5 +199,7 @@ func closeConn() {
 }
 
 func ShutDownTwitter() {
+	stoplock.Lock()
 	shutdown = true
+	stoplock.Unlock()
 }
