@@ -17,6 +17,11 @@ The idea is, that the user will choose random words, and then this system will t
 The user can then see what hashtagged words are popular throughout twitter!
 
 
+For example, compare the amount of times the words #go and #python appear on Tweets from now. Fortunately Go is winning ;)
+![Demo Animation](../assets/result.png?raw=true)
+
+
+
 ## Dependencies
 Go and mongoDB must be installed on your computer. 
 After that, a ```go get github.com/corno93/twittervotes``` will install this code for you locally. 
@@ -37,6 +42,7 @@ Type in separate prompts:
 After go to ```http://localhost:8081/```
 
 
-![Demo Animation](../assets/result.png?raw=true)
+
+
 
 ### Coming soon - cloud implementation...
