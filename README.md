@@ -16,13 +16,11 @@ The project uses Twitter's 'tracking' API to track hashtagged words that Twitter
 The idea is, that the user will choose random words, and then this system will track them on twitter and will expose the total count of these words in a pie chart on your browser. 
 The user can then see what hashtagged words are popular throughout twitter!
 
-## How it works
-
 
 ## Dependencies
-Obviously Go must be installed on your computer. 
-Mongodb will always need to be installed.
+Go and mongoDB must be installed on your computer. 
 After that, a ```go get github.com/corno93/twittervotes``` will install this code for you locally. 
+
 You will need to have Twitter developer credentials. These will need to be stored as environment variables on your machine.
 
 ## How to run
