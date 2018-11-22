@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project can be found in Chapter 5 and 6 of the Go Programming Blueprints text book written by Mat Ryer. 
+This project can be found in Chapter 5 and 6 of the [Go Programming Blueprints](https://www.packtpub.com/application-development/go-programming-blueprints-second-edition) text book written by Mat Ryer. 
 
 All I have done is typed the code from the textbook, managed to get it working, refactored it in a way I thought was clearer and have learnt a ton along the way.
 
