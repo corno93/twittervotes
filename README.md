@@ -37,5 +37,6 @@ Type in separate prompts:
 After go to ```http://localhost:8081/```
 
 
+![Demo Animation](../assets/result.png?raw=true)
 
 ### Coming soon - cloud implementation...
