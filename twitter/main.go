@@ -12,24 +12,6 @@ import (
 	"log"
 )
 
-/*
-	Project: Twitter tracking project
-
-	File: twitter votes
-
-	Dependencies: twitter secrets must be saved as environment variables
-
-	Description:
-		- collect user's options from mongo
-		- track user's options on twitter
-		- publish tracked words via NSQ bus
-
-*/
-
-// Errors
-var (
-	errFailedAuth = errors.New("Could not read all authorisation environment variables")
-)
 
 func main() {
 
