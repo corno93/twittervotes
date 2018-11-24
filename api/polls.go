@@ -1,5 +1,3 @@
-//The final piece of the puzzle is the handlePolls function, which will use the helpers to understand the incoming request and access the database and generate a meaningful response that will be sent back to the client.
-
 package main
 
 import (
@@ -41,29 +39,14 @@ func (s *Server) handlePolls(w http.ResponseWriter,
 	respondHTTPErr(w, r, http.StatusNotFound)
 }
 
-// func (s *Server) handlePollsGet(w http.ResponseWriter,
-// 	r *http.Request) {
-// 	respondErr(w, r, http.StatusInternalServerError,
-// 		errors.New("not implemented"))
-// }
-// func (s *Server) handlePollsPost(w http.ResponseWriter,
-// 	r *http.Request) {
-// 	respondErr(w, r, http.StatusInternalServerError,
-// 		errors.New("not implemented"))
-// }
-// func (s *Server) handlePollsDelete(w http.ResponseWriter,
-// 	r *http.Request) {
-// 	respondErr(w, r, http.StatusInternalServerError,
-// 		errors.New("not implemented"))
-// }
-
-// get poll data using id
+// get poll data using id. return response
 func (s *Server) handlePollsGet(w http.ResponseWriter, r *http.Request) {
-	//  create a copy of the database session that will allow us to interact with MongoDB
+
+	// create db copy
 	session := s.db.Copy()
 	defer session.Close()
 	c := session.DB("ballots").C("polls")
-	// We then build up an mgo.Query object by parsing the path.
+
 	var q *mgo.Query
 	p := NewPath(r.URL.Path)
 	if p.HasID() {

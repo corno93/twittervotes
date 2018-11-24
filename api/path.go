@@ -1,7 +1,3 @@
-// The http.Request object gives us access to every piece of information we might need about the underlying HTTP request
-// However URL parsing is one such this http.Request does not solve well. While we can access a path (such as /people/1/books/2) as a string via the http.Request
-// type's URL.Path field, there is no easy way to pull out the data encoded in the path, such as the people ID of1or the book ID of 2.
-
 package main
 
 import (
@@ -15,7 +11,7 @@ type Path struct {
 	ID   string
 }
 
-// This simple parser provides a NewPath function that parses the specified path string and returns a new instance of the Path type.
+// Pull out the data encoded in the path, such as the people ID of1or the book ID of 2 and return filled Path type
 func NewPath(p string) *Path {
 	var id string
 	p = strings.Trim(p, PathSeparator)
