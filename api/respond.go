@@ -6,7 +6,12 @@ import (
 	"net/http"
 )
 
+<<<<<<< HEAD
 // These two functions abstract the decoding and encoding of data from and to the Request and ResponseWriter objects
+=======
+// These two functions abstract the decoding and encoding of data from and to the Request and ResponseWriter objects, respectively
+// if we decide to add support for other representations or switch to a binary protocol instead, we only need to touch these two functions.
+>>>>>>> bb1838635a6c47ca84d1140e9b4b4da06f4b83bb
 func decodeBody(r *http.Request, v interface{}) error {
 	defer r.Body.Close()
 	return json.NewDecoder(r.Body).Decode(v)
