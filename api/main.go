@@ -9,7 +9,6 @@ import (
 	mgo "gopkg.in/mgo.v2"
 )
 
-// PAGE 875 for terminal run instructions
 
 func main() {
 	var (
