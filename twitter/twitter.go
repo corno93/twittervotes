@@ -128,15 +128,6 @@ func ReadTwitter(votes chan string, options []string) {
 	// continuosly loop forever
 	for {
 
-		fmt.Println("STOP: ", shutdown)
-
-		// stoplock.Lock()
-		// if shutdown {
-		// 	stoplock.Unlock()
-		// 	log.Println("Twitter shutdown")
-		// 	return
-		// }
-
 		// make the url
 		u, _ := url.Parse("https://stream.twitter.com/1.1/statuses/filter.json")
 
@@ -171,7 +162,7 @@ func ReadTwitter(votes chan string, options []string) {
 				return
 			}
 			stoplock.Unlock()
-			fmt.Println("SHTDOWN: ", shutdown)
+
 			var t tweet
 			if err := decoder.Decode(&t); err == nil {
 				for _, option := range options {
