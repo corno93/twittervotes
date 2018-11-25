@@ -12,7 +12,7 @@ Massive credit goes to Mat Ryer for the awesome textbook!
 
 ## The project
 
-The project uses Twitter's 'tracking' API to track hashtagged words that Twitter user's include in their tweets. 
+The project uses Twitter's filter [API](https://developer.twitter.com/en/products/tweets/filter.html) to track hashtagged words that Twitter user's include in their tweets. 
 The idea is, that the user will choose random words, and then this system will track them on twitter and will expose the total count of these words in a pie chart on your browser. 
 The user can then see what hashtagged words are popular throughout twitter!
 
