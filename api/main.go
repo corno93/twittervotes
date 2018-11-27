@@ -7,7 +7,13 @@ import (
 	"net/http"
 
 	"github.com/corno93/twittervotes/mongo"
+	mgo "gopkg.in/mgo.v2"
 )
+
+// Server struct will encapsulates all the dependencies for our handlers and include a database connection
+type Server struct {
+	db *mgo.Session
+}
 
 func main() {
 	var (
@@ -26,17 +32,16 @@ func main() {
 	log.Println("Starting web server on", *addr)
 	http.ListenAndServe(":8080", mux)
 	log.Println("Stopping...")
-)
+}
 
-
+// add a key to store our API key value in
 type contextKey struct {
 	name string
 }
 
-//we are going to add a key to store our API key value in
 var contextKeyAPIKey = &contextKey{"api-key"}
 
-//  helper that will, given a context, extract the key
+// helper that will, given a context, extract the key
 func APIKey(ctx context.Context) (string, bool) {
 	key, ok := ctx.Value(contextKeyAPIKey).(string)
 	return key, ok
@@ -63,20 +68,13 @@ func isValidAPIKey(key string) bool {
 	return key == "abc123"
 }
 
-// The same-origin security policy mandates that AJAX requests in web browsers be allowed only for services hosted on the same domain
-// The CORS (Cross-origin resource sharing) technique circumnavigates the same-origin policy, allowing us to build a service capable of serving websites hosted on other domains
-// it just sets the appropriate header on the ResponseWriter type and calls the specified http.HandlerFunc type.
+// helper function that users CORS headers
 func withCORS(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Expose-Headers",
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers#CORS
+		w.Header().Set("Access-Control-Allow-Origin", "*") // share response
+		w.Header().Set("Access-Control-Expose-Headers",    // expose location
 			"Location")
 		fn(w, r)
 	}
-}
-
-// Server is the API server.  encapsulates all the dependencies for our handlers and construct it with a database connection
-// Our handler functions will be methods of this server, which is how they will be able to access the database session.
-type Server struct {
-	db *mgo.Session
 }

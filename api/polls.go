@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -40,24 +39,13 @@ func (s *Server) handlePolls(w http.ResponseWriter,
 	respondHTTPErr(w, r, http.StatusNotFound)
 }
 
-
-// get poll data using id. return response
-func (s *Server) handlePollsGet(w http.ResponseWriter, r *http.Request) {
-
-	// create db copy
-	session := s.db.Copy()
-	defer session.Close()
-	c := session.DB("ballots").C("polls")
-
-
-
 // get poll data using id
 func (s *Server) handlePollsGet(w http.ResponseWriter, r *http.Request) {
 	//  create a copy of the database session that will allow us to interact with MongoDB
 	session := s.db.Copy()
 	defer session.Close()
 	c := session.DB("ballots").C("polls")
-	
+
 	// We then build up an mgo.Query object by parsing the path.
 	var q *mgo.Query
 	p := NewPath(r.URL.Path)
@@ -76,9 +64,8 @@ func (s *Server) handlePollsGet(w http.ResponseWriter, r *http.Request) {
 	respond(w, r, http.StatusOK, &result)
 }
 
-// create a poll
-func (s *Server) handlePollsPost(w http.ResponseWriter,
-	r *http.Request) {
+// create a poll with POST
+func (s *Server) handlePollsPost(w http.ResponseWriter, r *http.Request) {
 	session := s.db.Copy()
 	defer session.Close()
 	c := session.DB("ballots").C("polls")

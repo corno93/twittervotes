@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -12,7 +11,7 @@ type Path struct {
 	ID   string
 }
 
-// Pull out the data encoded in the path, such as the people ID of1or the book ID of 2 and return filled Path type
+// Pull out the data encoded in the path, such as the people ID and return filled Path type
 func NewPath(p string) *Path {
 	var id string
 	p = strings.Trim(p, PathSeparator)

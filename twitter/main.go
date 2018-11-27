@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,7 +10,6 @@ import (
 
 	"log"
 )
-
 
 func main() {
 
